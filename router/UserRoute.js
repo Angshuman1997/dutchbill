@@ -10,7 +10,7 @@ const {
   searchAccount,
   forgotAccount,
   otpVerify,
-} = require("../functions/Account/UserAccount");
+} = require("../operations/Account/UserAccount");
 
 // Create a new cache instance
 const cache = new NodeCache();

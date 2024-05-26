@@ -8,7 +8,7 @@ const {
   searchAccounts,
   deleteAccounts,
   addAccount,
-} = require("../functions/Account/AdminAccount");
+} = require("../operations/Account/AdminAccount");
 
 // Create a new cache instance
 const cache = new NodeCache();

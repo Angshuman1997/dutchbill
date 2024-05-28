@@ -11,7 +11,6 @@ app.use("/user/api", userRoutes);
 app.use("/admin/api", adminRoutes);
 
 // health endpoint
-
 app.get("/health", (req, res) => {
   const healthCheck = {
     uptime: process.uptime(),

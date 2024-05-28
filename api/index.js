@@ -10,9 +10,15 @@ app.use(bodyParser.json());
 app.use("/user/api", userRoutes);
 app.use("/admin/api", adminRoutes);
 
-// Test endpoint
-app.get("/test", (req, res) => {
-  res.send("Test endpoint is working!");
+// health endpoint
+
+app.get("/health", (req, res) => {
+  const healthCheck = {
+    uptime: process.uptime(),
+    message: "Server is UP",
+    timestamp: Date.now(),
+  };
+  res.status(200).send(healthCheck);
 });
 
 app.listen(PORT, () => {

@@ -12,10 +12,20 @@ app.use("/admin/api", adminRoutes);
 
 // health endpoint
 app.get("/health", (req, res) => {
+  const formatUptime = (uptime) => {
+    const days = Math.floor(uptime / (24 * 60 * 60));
+    uptime %= 24 * 60 * 60;
+    const hours = Math.floor(uptime / (60 * 60));
+    uptime %= 60 * 60;
+    const minutes = Math.floor(uptime / 60);
+    const seconds = uptime % 60;
+    return `${days}d ${hours}h ${minutes}m ${seconds}s`;
+  };
+
   const healthCheck = {
-    uptime: process.uptime(),
+    uptime: formatUptime(process.uptime()),
     message: "Server is UP",
-    timestamp: Date.now(),
+    timestamp: new Date().toLocaleString(),
   };
   res.status(200).send(healthCheck);
 });

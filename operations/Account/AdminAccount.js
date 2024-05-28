@@ -1,7 +1,7 @@
 const { ObjectId } = require("mongodb");
 const { connectToMongoDB, resetTimer } = require("../../database/db");
 
-// All  Account
+// All Account
 const allAccounts = async (coll) => {
   let connect = await connectToMongoDB();
   const database = connect.db();

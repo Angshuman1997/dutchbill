@@ -1,7 +1,7 @@
 const express = require("express");
 const bodyParser = require("body-parser");
-const userRoutes = require("./router/UserRoute");
-const adminRoutes = require("./router/AdminRoute");
+const userRoutes = require("../router/UserRoute");
+const adminRoutes = require("../router/AdminRoute");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -18,3 +18,5 @@ app.get("/test", (req, res) => {
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
+
+module.exports = app;

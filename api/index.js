@@ -1,7 +1,7 @@
 // index.js
 const express = require('express');
 const cors = require('cors');
-const { connectToMongo } = require('./db');
+const { connectToMongo, getDb } = require('./db');
 const userRoutes = require('./userOperations');
 
 const app = express();

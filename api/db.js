@@ -1,0 +1,34 @@
+// db.js
+const { MongoClient } = require('mongodb');
+require("dotenv").config();
+
+const uri = process.env.MONGODB_URI;
+const dbName = process.env.DBNAME;
+
+if (!uri.startsWith("mongodb+srv://") && !uri.startsWith("mongodb://")) {
+  console.error('Invalid MongoDB URI scheme. The URI must start with "mongodb+srv://" or "mongodb://".');
+  process.exit(1);
+}
+
+const client = new MongoClient(uri);
+let db;
+
+async function connectToMongo() {
+  try {
+    await client.connect();
+    console.log('Connected to MongoDB');
+    db = client.db(dbName);
+  } catch (error) {
+    console.error('Failed to connect to MongoDB', error);
+    process.exit(1);
+  }
+}
+
+function getDb() {
+  if (!db) {
+    throw new Error('Database not connected');
+  }
+  return db;
+}
+
+module.exports = { connectToMongo, getDb };

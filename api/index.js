@@ -1,33 +1,34 @@
-const express = require("express");
-const bodyParser = require("body-parser");
+// index.js
+const express = require('express');
+const { connectToMongo } = require('./db');
+const userRoutes = require('./userOperations');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(bodyParser.json());
+app.use(express.json());
 
-// health endpoint
-app.get("/health", (req, res) => {
-  const formatUptime = (uptime) => {
-    const days = Math.floor(uptime / (24 * 60 * 60));
-    uptime %= 24 * 60 * 60;
-    const hours = Math.floor(uptime / (60 * 60));
-    uptime %= 60 * 60;
-    const minutes = Math.floor(uptime / 60);
-    const seconds = uptime % 60;
-    return `${days}d ${hours}h ${minutes}m ${seconds}s`;
-  };
-
-  const healthCheck = {
-    uptime: formatUptime(process.uptime()),
-    message: "Server is UP",
-    timestamp: new Date().toLocaleString(),
-  };
-  res.status(200).send(healthCheck);
+// Health check endpoint
+app.get('/health', (req, res) => {
+  try {
+    if (getDb()) {
+      res.status(200).send('Server is healthy');
+    } else {
+      res.status(500).send('Server is not connected to MongoDB');
+    }
+  } catch (error) {
+    res.status(500).send('Server is not connected to MongoDB');
+  }
 });
 
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+// User routes
+app.use('/users', userRoutes);
+
+// Start the server after connecting to MongoDB
+connectToMongo().then(() => {
+  app.listen(PORT, () => {
+    console.log(`Server is running on ${PORT}`);
+  });
 });
 
 module.exports = app;

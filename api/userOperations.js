@@ -4,7 +4,10 @@ const { connectToMongo, getDb } = require('./db');
 
 const router = express.Router();
 
-const usersCollection = () => connectToMongo().collection('users');
+async function usersCollection() {
+  await connectToMongo();
+  return getDb().collection('users');
+}
 
 async function createUser(req, res, next) {
   try {
@@ -16,7 +19,8 @@ async function createUser(req, res, next) {
     const updateddate = createddate;
     const user = { name, username, password, emailId, createddate, updateddate };
 
-    const result = await usersCollection().insertOne(user);
+    const users = await usersCollection();
+    const result = await users.insertOne(user);
     res.status(201).json(result.ops[0]);
   } catch (error) {
     next(error);
@@ -25,8 +29,9 @@ async function createUser(req, res, next) {
 
 async function readUsers(req, res, next) {
   try {
-    const users = await usersCollection().find().toArray();
-    res.status(200).json(users);
+    const users = await usersCollection();
+    const userList = await users.find().toArray();
+    res.status(200).json(userList);
   } catch (error) {
     next(error);
   }
@@ -34,7 +39,8 @@ async function readUsers(req, res, next) {
 
 async function readUserById(req, res, next) {
   try {
-    const user = await usersCollection().findOne({ _id: new ObjectId(req.params.id) });
+    const users = await usersCollection();
+    const user = await users.findOne({ _id: new ObjectId(req.params.id) });
     if (user) {
       res.status(200).json(user);
     } else {
@@ -51,7 +57,8 @@ async function updateUserById(req, res, next) {
     const updateddate = new Date();
     const updateFields = { name, updateddate };
 
-    const result = await usersCollection().updateOne(
+    const users = await usersCollection();
+    const result = await users.updateOne(
       { _id: new ObjectId(req.params.id) },
       { $set: updateFields }
     );
@@ -67,7 +74,8 @@ async function updateUserById(req, res, next) {
 
 async function deleteUserById(req, res, next) {
   try {
-    const result = await usersCollection().deleteOne({ _id: new ObjectId(req.params.id) });
+    const users = await usersCollection();
+    const result = await users.deleteOne({ _id: new ObjectId(req.params.id) });
     if (result.deletedCount > 0) {
       res.status(200).json({ message: 'User deleted' });
     } else {
@@ -80,7 +88,8 @@ async function deleteUserById(req, res, next) {
 
 async function checkUserExists(req, res, next) {
   try {
-    const user = await usersCollection().findOne({ emailId: req.params.emailId });
+    const users = await usersCollection();
+    const user = await users.findOne({ emailId: req.params.emailId });
     if (user) {
       res.status(200).json({ message: 'User exists' });
     } else {

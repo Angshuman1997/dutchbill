@@ -1,4 +1,3 @@
-// index.js
 const express = require('express');
 const cors = require('cors');
 const { connectToMongo, getDb } = require('./db');
@@ -37,6 +36,9 @@ connectToMongo().then(() => {
   app.listen(PORT, () => {
     console.log(`Server is running on ${PORT}`);
   });
+}).catch((error) => {
+  console.error('Failed to start server due to MongoDB connection error', error);
+  process.exit(1);
 });
 
 module.exports = app;

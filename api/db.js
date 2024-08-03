@@ -9,7 +9,7 @@ if (!uri.startsWith("mongodb+srv://") && !uri.startsWith("mongodb://")) {
   process.exit(1);
 }
 
-const client = new MongoClient(uri);
+const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
 let db;
 
 async function connectToMongo() {
@@ -18,7 +18,7 @@ async function connectToMongo() {
     console.log('Connected to MongoDB');
     db = client.db(dbName);
   } catch (error) {
-    console.error('Failed to connect to MongoDB', error);
+    console.error('Failed to connect to MongoDB', error.message);
     process.exit(1);
   }
 }

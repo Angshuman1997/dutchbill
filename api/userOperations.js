@@ -1,10 +1,10 @@
 const express = require('express');
 const { ObjectId } = require('mongodb');
-const { getDb } = require('./db');
+const { connectToMongo, getDb } = require('./db');
 
 const router = express.Router();
 
-const usersCollection = () => getDb().collection('users');
+const usersCollection = () => connectToMongo().collection('users');
 
 async function createUser(req, res, next) {
   try {

@@ -8,27 +8,27 @@ const router = express.Router();
 const usersCollection = () => getDb().collection('users');
 
 // Create a user
-router.post('/', async (req, res) => {
+router.post('/', async (req, res, next) => {
   try {
     const result = await usersCollection().insertOne(req.body);
     res.status(201).json(result.ops[0]);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    next(error); // Pass the error to the error handling middleware
   }
 });
 
 // Read users
-router.get('/', async (req, res) => {
+router.get('/', async (req, res, next) => {
   try {
     const users = await usersCollection().find().toArray();
     res.status(200).json(users);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    next(error); // Pass the error to the error handling middleware
   }
 });
 
 // Read a specific user by ID
-router.get('/:id', async (req, res) => {
+router.get('/:id', async (req, res, next) => {
   try {
     const user = await usersCollection().findOne({ _id: new ObjectId(req.params.id) });
     if (user) {
@@ -37,12 +37,12 @@ router.get('/:id', async (req, res) => {
       res.status(404).json({ message: 'User not found' });
     }
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    next(error); // Pass the error to the error handling middleware
   }
 });
 
 // Update a user by ID
-router.put('/:id', async (req, res) => {
+router.put('/:id', async (req, res, next) => {
   try {
     const result = await usersCollection().updateOne(
       { _id: new ObjectId(req.params.id) },
@@ -54,12 +54,12 @@ router.put('/:id', async (req, res) => {
       res.status(404).json({ message: 'User not found' });
     }
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    next(error); // Pass the error to the error handling middleware
   }
 });
 
 // Delete a user by ID
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', async (req, res, next) => {
   try {
     const result = await usersCollection().deleteOne({ _id: new ObjectId(req.params.id) });
     if (result.deletedCount > 0) {
@@ -68,7 +68,7 @@ router.delete('/:id', async (req, res) => {
       res.status(404).json({ message: 'User not found' });
     }
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    next(error); // Pass the error to the error handling middleware
   }
 });
 

@@ -1,11 +1,13 @@
 // index.js
 const express = require('express');
+const cors = require('cors');
 const { connectToMongo } = require('./db');
 const userRoutes = require('./userOperations');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+app.use(cors()); // Enable CORS for all routes
 app.use(express.json());
 
 // Health check endpoint
@@ -23,6 +25,12 @@ app.get('/health', (req, res) => {
 
 // User routes
 app.use('/users', userRoutes);
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ error: 'Something went wrong!' });
+});
 
 // Start the server after connecting to MongoDB
 connectToMongo().then(() => {

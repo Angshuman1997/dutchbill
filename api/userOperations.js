@@ -1,6 +1,6 @@
 const express = require('express');
 const { ObjectId } = require('mongodb');
-const { connectToMongo, getDb } = require('./db');
+const { connectToMongo, getDb, closeConnection } = require('./db');
 
 const router = express.Router();
 
@@ -9,7 +9,7 @@ async function usersCollection() {
   return getDb().collection('users');
 }
 
-async function createUser(req, res, next) {
+async function createUser(req, res) {
   try {
     const { name, username, password, emailId } = req.body;
     if (!name || !username || !password || !emailId) {
@@ -21,23 +21,27 @@ async function createUser(req, res, next) {
 
     const users = await usersCollection();
     const result = await users.insertOne(user);
-    res.status(201).json(result.ops[0]);
+    res.status(201).json(result);
   } catch (error) {
-    next(error);
+    console.error(error);
+  } finally {
+    await closeConnection();
   }
 }
 
-async function readUsers(req, res, next) {
+async function readUsers(req, res) {
   try {
     const users = await usersCollection();
     const userList = await users.find().toArray();
     res.status(200).json(userList);
   } catch (error) {
-    next(error);
+    console.error(error);
+  } finally {
+    await closeConnection();
   }
 }
 
-async function readUserById(req, res, next) {
+async function readUserById(req, res) {
   try {
     const users = await usersCollection();
     const user = await users.findOne({ _id: new ObjectId(req.params.id) });
@@ -47,11 +51,13 @@ async function readUserById(req, res, next) {
       res.status(404).json({ message: 'User not found' });
     }
   } catch (error) {
-    next(error);
+    console.error(error);
+  } finally {
+    await closeConnection();
   }
 }
 
-async function updateUserById(req, res, next) {
+async function updateUserById(req, res) {
   try {
     const { name } = req.body;
     const updateddate = new Date();
@@ -68,11 +74,13 @@ async function updateUserById(req, res, next) {
       res.status(404).json({ message: 'User not found' });
     }
   } catch (error) {
-    next(error);
+    console.error(error);
+  } finally {
+    await closeConnection();
   }
 }
 
-async function deleteUserById(req, res, next) {
+async function deleteUserById(req, res) {
   try {
     const users = await usersCollection();
     const result = await users.deleteOne({ _id: new ObjectId(req.params.id) });
@@ -82,11 +90,13 @@ async function deleteUserById(req, res, next) {
       res.status(404).json({ message: 'User not found' });
     }
   } catch (error) {
-    next(error);
+    console.error(error);
+  } finally {
+    await closeConnection();
   }
 }
 
-async function checkUserExists(req, res, next) {
+async function checkUserExists(req, res) {
   try {
     const users = await usersCollection();
     const user = await users.findOne({ emailId: req.params.emailId });
@@ -96,7 +106,9 @@ async function checkUserExists(req, res, next) {
       res.status(404).json({ message: 'User not found' });
     }
   } catch (error) {
-    next(error);
+    console.error(error);
+  } finally {
+    await closeConnection();
   }
 }
 

@@ -30,4 +30,13 @@ function getDb() {
   return db;
 }
 
-module.exports = { connectToMongo, getDb };
+async function closeConnection() {
+    try {
+      await client.close();
+      console.log('MongoDB connection closed');
+    } catch (error) {
+      console.error('Failed to close MongoDB connection', error.message);
+    }
+  }
+
+module.exports = { connectToMongo, getDb, closeConnection };

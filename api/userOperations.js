@@ -102,9 +102,9 @@ async function checkUserExists(req, res) {
     const users = await usersCollection();
     const user = await users.findOne({ emailId: emailId, username: username });
     if (user) {
-      res.status(200).json({ message: 'User exists' });
+      res.status(200).json({ message: 'exists' });
     } else {
-      res.status(404).json({ message: 'User not found' });
+      res.status(404).json({ message: 'not_exists' });
     }
   } catch (error) {
     console.error(error);

@@ -98,8 +98,9 @@ async function deleteUserById(req, res) {
 
 async function checkUserExists(req, res) {
   try {
+    const { username, emailId } = req.body;
     const users = await usersCollection();
-    const user = await users.findOne({ emailId: req.params.emailId });
+    const user = await users.findOne({ emailId: emailId, username: username });
     if (user) {
       res.status(200).json({ message: 'User exists' });
     } else {
@@ -117,6 +118,6 @@ router.get('/', readUsers);
 router.get('/:id', readUserByUserName);
 router.put('/:id', updateUserById);
 router.delete('/:id', deleteUserById);
-router.get('/check/:emailId', checkUserExists);
+router.get('/check', checkUserExists);
 
 module.exports = router;

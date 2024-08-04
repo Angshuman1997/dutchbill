@@ -41,10 +41,10 @@ async function readUsers(req, res) {
   }
 }
 
-async function readUserById(req, res) {
+async function readUserByUserName(req, res) {
   try {
     const users = await usersCollection();
-    const user = await users.findOne({ _id: new ObjectId(req.params.id) });
+    const user = await users.findOne({ username: new ObjectId(req.params.username) });
     if (user) {
       res.status(200).json(user);
     } else {
@@ -114,7 +114,7 @@ async function checkUserExists(req, res) {
 
 router.post('/', createUser);
 router.get('/', readUsers);
-router.get('/:id', readUserById);
+router.get('/:id', readUserByUserName);
 router.put('/:id', updateUserById);
 router.delete('/:id', deleteUserById);
 router.get('/check/:emailId', checkUserExists);

@@ -104,7 +104,7 @@ async function checkUserExists(req, res) {
     if (user) {
       res.status(200).json({ message: 'exists' });
     } else {
-      res.status(404).json({ message: 'not_exists' });
+      res.status(200).json({ message: 'not_exists' });
     }
   } catch (error) {
     console.error(error);

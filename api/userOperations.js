@@ -115,7 +115,7 @@ async function checkUserExists(req, res) {
 
 router.post('/', createUser);
 router.get('/', readUsers);
-router.get('/:id', readUserByUserName);
+router.get('/username/:id', readUserByUserName);
 router.put('/:id', updateUserById);
 router.delete('/:id', deleteUserById);
 router.get('/check', checkUserExists);

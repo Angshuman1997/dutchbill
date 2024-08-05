@@ -1,8 +1,15 @@
 const express = require('express');
 const { ObjectId } = require('mongodb');
 const { connectToMongo, getDb, closeConnection } = require('./db');
+const { sendEmail } = require('../Email/EmailFunc');
+const {generateMessageBody} = require('../Email/Template');
 
 const router = express.Router();
+
+const generateOTP = async () => {
+  const { default: cryptoRandomString } = await import("crypto-random-string");
+  return cryptoRandomString({ length: 6, type: "numeric" }); // Generates a 6-digit numeric OTP
+};
 
 async function usersCollection() {
   await connectToMongo();
@@ -17,11 +24,31 @@ async function createUser(req, res) {
     }
     const createddate = new Date();
     const updateddate = createddate;
-    const user = { name, username, password, emailId, createddate, updateddate };
+    const otp = await generateOTP();
+    const user = { name, username, password, emailId, createddate, updateddate, otp };
+
+    const mesBody = generateMessageBody(name, otp);
+
+    
 
     const users = await usersCollection();
     const result = await users.insertOne(user);
-    res.status(201).json(result);
+
+    const sendResult = await sendEmail(
+      process.env.EMAIL_USERNAME,
+      emailId,
+      "OTP Verification for DutchBill",
+      mesBody,
+      mesBody
+    );
+
+    if (!sendResult.success) {
+      await users.deleteOne({ _id: new ObjectId(result.insertedId) });
+      res.status(404).json({success: false, message: "Failed to create new user"});
+    } else{
+      res.status(201).json({...result, success: true, message: "Success on create new user at database"});
+    }
+    
   } catch (error) {
     console.error(error);
   } finally {
@@ -96,6 +123,53 @@ async function deleteUserById(req, res) {
   }
 }
 
+async function otpAction(req, res) {
+  try {
+    const { id, onTime, otpValue, resend, name, emailId } = req.body;
+    const updateddate = new Date();
+    if(resend){
+      const otp = await generateOTP();
+      const mesBody = generateMessageBody(name, otp);
+
+      await users.updateOne({ _id: new ObjectId(id) },
+        { $set: {otp: otp, updateddate: updateddate} });
+
+      const sendResult = await sendEmail(
+        process.env.EMAIL_USERNAME,
+        emailId,
+        "Re-send OTP Verification for DutchBill",
+        mesBody,
+        mesBody
+      );
+
+      if (!sendResult.success) {
+        await users.updateOne({ _id: new ObjectId(id) },
+        { $set: {otp: ''} })
+        res.status(404).json({success: false, message: "Failed to generate otp"});
+      } else{
+        res.status(201).json({...result, success: true, message: "OTP generate success"});
+      }
+    }
+
+    if(onTime && !resend){
+      const userDataFetch = await users.findOne({ _id: new ObjectId(id) });
+      if(userDataFetch.otp === otpValue) {
+        await users.updateOne({ _id: new ObjectId(id) },
+        { $set: {otp: '', updateddate: updateddate} })
+        res.status(200).json({ otpVerification: true });
+      } else{
+        res.status(200).json({ otpVerification: false });
+      }
+    } else{
+      await users.deleteOne({ _id: new ObjectId(id) });
+    }
+  } catch (error) {
+    console.error(error);
+  } finally {
+    await closeConnection();
+  }
+}
+
 async function checkUserExists(req, res) {
   try {
     const { username, emailId } = req.body;
@@ -119,5 +193,6 @@ router.get('/username/:username', readUserByUserName);
 router.put('/:id', updateUserById);
 router.delete('/:id', deleteUserById);
 router.get('/check', checkUserExists);
+router.post('/otp', otpAction);
 
 module.exports = router;

@@ -86,9 +86,15 @@ async function readUserByUserName(req, res) {
 
 async function updateUserById(req, res) {
   try {
-    const { name } = req.body;
+    const { name, formType, password } = req.body;
     const updateddate = new Date();
-    const updateFields = { name, updateddate };
+    const updateFields = { updateddate };
+
+    if(formType === 'forgetpass') {
+      updateFields.password = password;
+    } else{
+      updateFields.name = name;
+    }
 
     const users = await usersCollection();
     const result = await users.updateOne(

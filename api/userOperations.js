@@ -1,6 +1,6 @@
 const express = require('express');
 const { ObjectId } = require('mongodb');
-const { connectToMongo, getDb, closeConnection } = require('./db');
+const { connectToMongo, getDb } = require('./db');
 const { sendEmail } = require('../Email/EmailFunc');
 const {generateMessageBody} = require('../Email/Template');
 
@@ -19,17 +19,12 @@ async function usersCollection() {
 async function createUser(req, res) {
   try {
     const { name, username, password, emailId } = req.body;
-    if (!name || !username || !password || !emailId) {
-      return res.status(400).json({ message: 'All fields are required' });
-    }
     const createddate = new Date();
     const updateddate = createddate;
     const otp = await generateOTP();
     const user = { name, username, password, emailId, createddate, updateddate, otp };
 
     const mesBody = generateMessageBody(name, otp);
-
-    
 
     const users = await usersCollection();
     const result = await users.insertOne(user);
@@ -46,13 +41,12 @@ async function createUser(req, res) {
       await users.deleteOne({ _id: new ObjectId(result.insertedId) });
       res.status(404).json({success: false, message: "Failed to create new user"});
     } else{
-      res.status(201).json({...result, success: true, message: "Success on create new user at database"});
+      res.status(201).json({...result, success: true, message: "OTP sent to the given email ID"});
     }
     
   } catch (error) {
     console.error(error);
-  } finally {
-    await closeConnection();
+    res.status(500).json({success: false, message: "Something went wrong !", error: error});
   }
 }
 
@@ -63,53 +57,69 @@ async function readUsers(req, res) {
     res.status(200).json(userList);
   } catch (error) {
     console.error(error);
-  } finally {
-    await closeConnection();
   }
 }
 
-async function readUserByUserName(req, res) {
+async function readSingleUser(req, res) {
   try {
     const users = await usersCollection();
-    const user = await users.findOne({ username: req.params.username });
-    if (user) {
-      res.status(200).json(user);
+    const { userId, username, userEmail } = req.body;
+    let user;
+    if(userId){
+      user = await users.findOne({ _id: new ObjectId(userId) });
+    } else if(username){
+      user = await users.findOne({ username: username });
+    } else if(userEmail) {
+      user = await users.findOne({ emailId: userEmail });
     } else {
-      res.status(404).json({ message: 'User not found' });
+      res.status(404).json({success: false, status: 404, message: "Atleast any one id, email or username is required"});
+    }
+
+    if (user) {
+      res.status(200).json({success: true, status: 200, data: user, message: "User found"});
+    } else {
+      res.status(404).json({ success: false, status: 404, message: 'User not found' });
     }
   } catch (error) {
     console.error(error);
-  } finally {
-    await closeConnection();
+    res.status(500).json({ success: false, status: 500, message: 'Something went wrong !', error: error });
   }
 }
 
-async function updateUserById(req, res) {
+async function updateUser(req, res) {
   try {
-    const { name, formType, password } = req.body;
+    const { name, formType, password, username, userEmail, userId } = req.body;
     const updateddate = new Date();
     const updateFields = { updateddate };
 
     if(formType === 'forgetpass') {
       updateFields.password = password;
-    } else{
+    } else {
       updateFields.name = name;
     }
 
     const users = await usersCollection();
-    const result = await users.updateOne(
-      { _id: new ObjectId(req.params.id) },
-      { $set: updateFields }
-    );
-    if (result.matchedCount > 0) {
-      res.status(200).json({ message: 'User updated' });
+
+    let result;
+
+    if(userId){
+      result = await users.updateOne({ _id: new ObjectId(req.params.id)},{ $set: updateFields });
+    } else if(username){
+      result = await users.updateOne({ username: username}, { $set: updateFields });
+    } else if(userEmail){
+      result = await users.updateOne({ emailId: userEmail}, { $set: updateFields });
     } else {
-      res.status(404).json({ message: 'User not found' });
+      res.status(404).json({success: false, status: 404, message: "Atleast any one user id, email ID or username is required"});
+    }
+    
+    if (result.matchedCount > 0) {
+      res.status(200).json({ success: true, status: 200, message: 'Information updated' });
+    } else {
+      res.status(404).json({ success: false, status: 404, message: 'Failed to update' });
     }
   } catch (error) {
     console.error(error);
-  } finally {
-    await closeConnection();
+    res.status(500).json({ success: false, status: 500, message: 'Something went wrong !', error: error });
   }
 }
 
@@ -124,8 +134,6 @@ async function deleteUserById(req, res) {
     }
   } catch (error) {
     console.error(error);
-  } finally {
-    await closeConnection();
   }
 }
 
@@ -165,49 +173,62 @@ async function otpAction(req, res) {
       const userDataFetch = await users.findOne({ _id: new ObjectId(id) });
       if(userDataFetch.otp === otpValue) {
         await users.updateOne({ _id: new ObjectId(id) },
-        { $set: {otp: '', updateddate: updateddate} })
-        res.status(200).json({ otpVerification: true });
+        { $set: {otp: '', updateddate: updateddate} });
+        res.status(200).json({ otpVerification: true,  message: "OTP Verified !!!"});
       } else{
-        res.status(200).json({ otpVerification: false });
+        res.status(404).json({ otpVerification: false, message: "Please check the otp sent on the email ID"});
       }
     } else{
-      if(formType === 'signup'){
-        await users.deleteOne({ _id: new ObjectId(id) });
-      } else{
-        await users.updateOne({ emailId: emailId },
-        { $set: {otp: ''} });
-      }
-      
+        if(formType === 'signup'){
+          await users.deleteOne({ _id: new ObjectId(id) });
+        } else{
+          await users.updateOne({ emailId: emailId },
+          { $set: {otp: ''} });
+        }
     }
   } catch (error) {
     console.error(error);
-  } finally {
-    await closeConnection();
+    res.status(500).json({ otpVerification: false, message: "Something went wrong !", error: error});
   }
 }
 
 async function checkUserExists(req, res) {
   try {
-    const { username, emailId } = req.body;
+    const { username, userEmail, formType } = req.body;
     const users = await usersCollection();
-    const user = await users.findOne({ emailId: emailId, username: username });
+    let user;
+
+    if(formType === "signup") {
+      if(!username && !userEmail){
+        res.status(404).json({success: false, status: 404, message: "Both username and email ID are required"});
+      }
+      user = await users.findOne({ username: username, emailId: userEmail });
+    } else{
+      if(username){
+        user = await users.findOne({ username: username });
+      } else if(userEmail) {
+        user = await users.findOne({ emailId: userEmail });
+      } else{
+        res.status(404).json({success: false, status: 404, message: "Atleast any one email ID or username is required"});
+      }
+    }
+    
     if (user) {
-      res.status(200).json({ message: 'exists' });
+      res.status(200).json({ userExists: true, status: 200, message: "User Already exists, go forget password to change password!" });
     } else {
-      res.status(200).json({ message: 'not_exists' });
+      res.status(201).json({ userExists: false, status: 201, message: "User does not exists" });
     }
   } catch (error) {
     console.error(error);
-  } finally {
-    await closeConnection();
+    res.status(500).json({ userExists: false, status: 500, message: "Something went wrong !", error: error });
   }
 }
 
-router.post('/', createUser);
-router.get('/', readUsers);
-router.get('/username/:username', readUserByUserName);
-router.put('/:id', updateUserById);
-router.delete('/:id', deleteUserById);
+router.post('/create', createUser);
+router.get('/allUsers', readUsers);
+router.get('/singleUser', readSingleUser);
+router.put('/update', updateUser);
+router.delete('/delete/:id', deleteUserById);
 router.get('/check', checkUserExists);
 router.post('/otp', otpAction);
 

@@ -71,7 +71,7 @@ async function readUsers(req, res) {
 async function readUserByUserName(req, res) {
   try {
     const users = await usersCollection();
-    const user = await users.findOne({ username: new ObjectId(req.params.username) });
+    const user = await users.findOne({ username: req.params.username });
     if (user) {
       res.status(200).json(user);
     } else {

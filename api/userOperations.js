@@ -131,6 +131,7 @@ async function deleteUserById(req, res) {
 
 async function otpAction(req, res) {
   try {
+    const users = await usersCollection();
     const { id, onTime, otpValue, resend, name, emailId, formType } = req.body;
     const updateddate = new Date();
     if(resend){
@@ -158,11 +159,9 @@ async function otpAction(req, res) {
         { $set: {otp: ''} })
         res.status(404).json({success: false, message: "Failed to generate otp"});
       } else{
-        res.status(201).json({...result, success: true, message: "OTP generate success"});
+        res.status(201).json({...sendResult, success: true, message: "OTP generate success"});
       }
-    }
-
-    if(onTime && !resend){
+    } else if(onTime && !resend){
       const userDataFetch = await users.findOne({ _id: new ObjectId(id) });
       if(userDataFetch.otp === otpValue) {
         await users.updateOne({ _id: new ObjectId(id) },
@@ -175,7 +174,7 @@ async function otpAction(req, res) {
       if(formType === 'signup'){
         await users.deleteOne({ _id: new ObjectId(id) });
       } else{
-        await users.updateOne({ _id: new ObjectId(id) },
+        await users.updateOne({ emailId: emailId },
         { $set: {otp: ''} });
       }
       

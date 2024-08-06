@@ -125,19 +125,24 @@ async function deleteUserById(req, res) {
 
 async function otpAction(req, res) {
   try {
-    const { id, onTime, otpValue, resend, name, emailId } = req.body;
+    const { id, onTime, otpValue, resend, name, emailId, formType } = req.body;
     const updateddate = new Date();
     if(resend){
       const otp = await generateOTP();
       const mesBody = generateMessageBody(name, otp);
-
-      await users.updateOne({ _id: new ObjectId(id) },
+      
+      if(formType==="forgetpass"){
+        await users.updateOne({ emailId: emailId },
         { $set: {otp: otp, updateddate: updateddate} });
+      } else{
+        await users.updateOne({ _id: new ObjectId(id) },
+        { $set: {otp: otp, updateddate: updateddate} });
+      }
 
       const sendResult = await sendEmail(
         process.env.EMAIL_USERNAME,
         emailId,
-        "Re-send OTP Verification for DutchBill",
+        "OTP Verification for DutchBill",
         mesBody,
         mesBody
       );
@@ -161,7 +166,13 @@ async function otpAction(req, res) {
         res.status(200).json({ otpVerification: false });
       }
     } else{
-      await users.deleteOne({ _id: new ObjectId(id) });
+      if(formType === 'signup'){
+        await users.deleteOne({ _id: new ObjectId(id) });
+      } else{
+        await users.updateOne({ _id: new ObjectId(id) },
+        { $set: {otp: ''} });
+      }
+      
     }
   } catch (error) {
     console.error(error);

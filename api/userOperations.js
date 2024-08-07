@@ -64,6 +64,7 @@ async function readSingleUser(req, res) {
   try {
     const users = await usersCollection();
     const { userId, username, userEmail, password, formType } = req.body;
+    console.log("payload", userId, username, userEmail, password, formType)
     let user;
 
     if(formType === 'login'){

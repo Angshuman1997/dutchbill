@@ -1,10 +1,17 @@
 const express = require('express');
+const bodyParser = require('body-parser');
 const cors = require('cors');
 const { connectToMongo, getDb } = require('./db');
 const userRoutes = require('./userOperations');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Parse JSON bodies
+app.use(bodyParser.json());
+
+// Parse URL-encoded bodies
+app.use(bodyParser.urlencoded({ extended: true }));
 
 app.use(cors()); // Enable CORS for all routes
 app.use(express.json());

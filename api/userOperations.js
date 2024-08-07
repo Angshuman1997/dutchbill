@@ -232,10 +232,10 @@ async function checkUserExists(req, res) {
 
 router.post('/create', createUser);
 router.get('/allUsers', readUsers);
-router.get('/singleUser', readSingleUser);
+router.post('/singleUser', readSingleUser);
 router.put('/update', updateUser);
 router.delete('/delete/:id', deleteUserById);
-router.get('/check', checkUserExists);
+router.post('/check', checkUserExists);
 router.post('/otp', otpAction);
 
 module.exports = router;

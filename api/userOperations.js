@@ -63,16 +63,21 @@ async function readUsers(req, res) {
 async function readSingleUser(req, res) {
   try {
     const users = await usersCollection();
-    const { userId, username, userEmail } = req.body;
+    const { userId, username, userEmail, password, formType } = req.body;
     let user;
-    if(userId){
-      user = await users.findOne({ _id: new ObjectId(userId) });
-    } else if(username){
-      user = await users.findOne({ username: username });
-    } else if(userEmail) {
-      user = await users.findOne({ emailId: userEmail });
-    } else {
-      return res.status(404).json({success: false, status: 404, message: "Atleast any one id, email or username is required"});
+
+    if(formType === 'login'){
+      user = await users.findOne({ username: username, password: password });
+    } else{
+      if(userId){
+        user = await users.findOne({ _id: new ObjectId(userId) });
+      } else if(username){
+        user = await users.findOne({ username: username });
+      } else if(userEmail) {
+        user = await users.findOne({ emailId: userEmail });
+      } else {
+        return res.status(404).json({success: false, status: 404, message: "Atleast any one id, email or username is required"});
+      }
     }
 
     if (user) {

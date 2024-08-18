@@ -3,6 +3,7 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const { connectToMongo, getDb } = require('./db');
 const userRoutes = require('./userOperations');
+const expenseRoutes = require('./expenseOperations');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -31,6 +32,7 @@ app.get('/health', (req, res) => {
 
 // User routes
 app.use('/api/user', userRoutes);
+app.use('/api/expense', expenseRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

@@ -228,6 +228,6 @@ async function fetchExpenses(req, res) {
 
 router.post("/addexpense", addExpense);
 router.delete("/removeexpense/:id", removeExpense);
-router.get("/fetchExpense/:id", fetchExpenses);
+router.get("/fetchexpense/:id", fetchExpenses);
 
 module.exports = router;

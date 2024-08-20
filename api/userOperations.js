@@ -53,12 +53,100 @@ async function createUser(req, res) {
 async function readUsers(req, res) {
   try {
     const users = await usersCollection();
-    const userList = await users.find().toArray();
-    return res.status(200).json(userList);
+    const { search, userId } = req.body;
+
+    let filter = {};
+    if (search) {
+      filter.name = { $regex: search, $options: 'i' };
+    }
+    
+    const userList = await users.find(filter, { projection: { username: 1, name: 1, _id: 1 } }).toArray();
+
+    const refineUserList = userList.filter((i) => !new ObjectId(i._id).equals(new ObjectId(userId)));
+
+    return res.status(200).json(refineUserList);
   } catch (error) {
     console.error(error);
+    return res.status(500).json({ error: 'An error occurred while fetching users.' });
   }
 }
+
+// async function addFriend(req, res) {
+//   try {
+//     const users = await usersCollection();
+//     const { userId, friends } = req.body; // friends should be an array of objects
+
+//     let result = await users.updateOne(
+//       { _id: new ObjectId(userId) },
+//       {
+//         $addToSet: { friends: { $each: friends } },  // Use $addToSet to avoid duplicates
+//       }
+//     );
+
+//     const user = await users.findOne({ _id: new ObjectId(userId) });
+
+//     Object.keys(friends).forEach(async (i)=>{
+//       let result = await users.updateOne(
+//         { _id: new ObjectId(userId) },
+//         {
+//           $addToSet: { friends: { $each: friends } },  // Use $addToSet to avoid duplicates
+//         }
+//       );
+//     })
+
+//     if (result.matchedCount > 0) {
+//       return res.status(200).json({
+//         success: true,
+//         status: 200,
+//         data: result,
+//         message: "Friends added",
+//       });
+//     } else {
+//       return res.status(404).json({
+//         success: false,
+//         status: 404,
+//         data: result,
+//         message: "Failed to add friends",
+//       });
+//     }
+//   } catch (error) {
+//     console.error(error);
+//     return res.status(500).json({ error: "Something went wrong!" });
+//   }
+// }
+
+// async function removeFriend(req, res) {
+//   try {
+//     const users = await usersCollection();
+//     const { userId, friends } = req.body; // friends should be an array of objects
+
+//     let result = await users.updateOne(
+//       { _id: new ObjectId(userId) },
+//       {
+//         $pull: { friends: { $in: friends } },  // $in to match any friends in the array
+//       }
+//     );
+
+//     if (result.matchedCount > 0) {
+//       return res.status(200).json({
+//         success: true,
+//         status: 200,
+//         data: result,
+//         message: "Friends removed",
+//       });
+//     } else {
+//       return res.status(404).json({
+//         success: false,
+//         status: 404,
+//         data: result,
+//         message: "Failed to remove friends",
+//       });
+//     }
+//   } catch (error) {
+//     console.error(error);
+//     return res.status(500).json({ error: "Something went wrong!" });
+//   }
+// }
 
 async function readSingleUser(req, res) {
   try {
@@ -231,8 +319,10 @@ async function checkUserExists(req, res) {
 }
 
 router.post('/create', createUser);
-router.get('/allUsers', readUsers);
-router.post('/singleUser', readSingleUser);
+router.get('/allusers', readUsers);
+// router.post('/addfriend', addFriend);
+// router.post('/removefriend', removeFriend);
+router.post('/singleuser', readSingleUser);
 router.put('/update', updateUser);
 router.delete('/delete/:id', deleteUserById);
 router.post('/check', checkUserExists);

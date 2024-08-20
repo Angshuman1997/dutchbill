@@ -45,9 +45,10 @@ async function addExpense(req, res) {
       createddate,
     };
 
-    const expenses = await expenseCollection().insertOne(expense);
+    const expenses = await expenseCollection();
+    const result = await expenses.insertOne(expense);
 
-    if (expenses) {
+    if (result) {
       const users = await usersCollection();
       const expenseId = expenses.insertedId;
       let resultSuccess = true;

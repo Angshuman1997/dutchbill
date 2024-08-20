@@ -22,7 +22,8 @@ async function createUser(req, res) {
     const createddate = new Date();
     const updateddate = createddate;
     const otp = await generateOTP();
-    const user = { name, username, password, emailId, createddate, updateddate, otp };
+    const expenseData = [];
+    const user = { name, username, password, emailId, createddate, updateddate, otp, expenseData };
 
     const mesBody = generateMessageBody(name, otp);
 

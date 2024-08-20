@@ -160,11 +160,11 @@ async function readSingleUser(req, res) {
       user = await users.findOne({ username: username, password: password });
     } else{
       if(userId){
-        user = await users.findOne({ _id: new ObjectId(userId) });
+        user = await users.findOne({ _id: new ObjectId(userId) }, { projection: { username: 1, name: 1, _id: 1, emailId: 1 } });
       } else if(username){
-        user = await users.findOne({ username: username });
+        user = await users.findOne({ username: username }, { projection: { username: 1, name: 1, _id: 1, emailId: 1 } });
       } else if(userEmail) {
-        user = await users.findOne({ emailId: userEmail });
+        user = await users.findOne({ emailId: userEmail }, { projection: { username: 1, name: 1, _id: 1, emailId: 1 } });
       } else {
         return res.status(404).json({success: false, status: 404, message: "Atleast any one id, email or username is required"});
       }

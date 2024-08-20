@@ -145,25 +145,25 @@ async function addExpense(req, res) {
 async function removeExpense(req, res) {
   try {
     const expenseData = await expenseCollection().findOne({
-      _id: new ObjectId(req.params.id),
+      _id: new ObjectId(req.body.expenseId),
     });
 
     const amountDistributionKeys = Object.keys(expenseData.amountDistribution);
 
     const result = await expenseCollection().deleteOne({
-      _id: new ObjectId(req.params.id),
+      _id: new ObjectId(req.body.expenseId),
     });
 
     if (result) {
       const resData = db.users.updateMany(
         {
           username: { $in: amountDistributionKeys },
-          "expenseData.expenseId": new ObjectId(req.params.id),
+          "expenseData.expenseId": new ObjectId(req.body.expenseId),
         },
         {
           $pull: {
             expenseData: {
-              expenseId: new ObjectId(req.params.id),
+              expenseId: new ObjectId(req.body.expenseId),
             },
           },
         }
@@ -201,14 +201,13 @@ async function fetchExpenses(req, res) {
   try {
     const users = await usersCollection();
     const user = await users.findOne({
-      _id: new ObjectId(req.params.id),
+      _id: new ObjectId(req.body.userId),
     });
     if (user) {
       return res.status(200).json({
         data: user.expenseData,
         success: true,
         status: 200,
-        data: user,
         message: "Expenses found",
       });
     } else {
@@ -227,7 +226,7 @@ async function fetchExpenses(req, res) {
 }
 
 router.post("/addexpense", addExpense);
-router.delete("/removeexpense/:id", removeExpense);
-router.get("/fetchexpense/:id", fetchExpenses);
+router.delete("/removeexpense", removeExpense);
+router.get("/fetchexpense", fetchExpenses);
 
 module.exports = router;

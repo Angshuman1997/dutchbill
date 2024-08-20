@@ -157,7 +157,7 @@ async function readSingleUser(req, res) {
     let user;
 
     if(formType === 'login'){
-      user = await users.findOne({ username: username, password: password });
+      user = await users.findOne({ username: username, password: password }, { projection: { username: 1, name: 1, _id: 1, emailId: 1 } });
     } else{
       if(userId){
         user = await users.findOne({ _id: new ObjectId(userId) }, { projection: { username: 1, name: 1, _id: 1, emailId: 1 } });

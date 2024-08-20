@@ -47,29 +47,52 @@ async function addExpense(req, res) {
 
     const expenses = await expenseCollection();
     const result = await expenses.insertOne(expense);
+    let resultSuccess = true;
 
     if (result) {
       const users = await usersCollection();
-      const expenseId = expenses.insertedId;
-      let resultSuccess = true;
+      const expenseId = result.insertedId; // Corrected to use `result.insertedId`
 
       for (const [key, value] of Object.entries(amountDistribution)) {
         if (!new ObjectId(key).equals(new ObjectId(paidBy._id))) {
           const personData = persons.find((person) => person._id === key);
-          let result;
+
           // Receiver
-          result = await users.updateOne(
-            { _id: new ObjectId(paidById._id) },
+          const receiverUpdateResult = await users.updateOne(
+            { _id: new ObjectId(paidBy._id) },
             {
               $push: {
                 expenseData: {
-                  $each: {
+                  expenseId: new ObjectId(expenseId),
+                  type: "receive",
+                  payTo: null,
+                  payToId: null,
+                  receiveFrom: personData.name,
+                  receiveFromId: new ObjectId(personData._id),
+                  amount: value,
+                  status: "pending",
+                  trnscDate: createddate,
+                  trnscCompleteDate: null,
+                  group,
+                  expenseType,
+                  ifOthersComment,
+                },
+              },
+            }
+          );
+
+          if (receiverUpdateResult.matchedCount > 0) {
+            const payerUpdateResult = await users.updateOne(
+              { _id: new ObjectId(key) },
+              {
+                $push: {
+                  expenseData: {
                     expenseId: new ObjectId(expenseId),
-                    type: "receive",
-                    payTo: null,
-                    payToId: null,
-                    receiveFrom: personData.name,
-                    receiveFromId: new ObjectId(personData._id),
+                    type: "pay",
+                    payTo: paidBy.name,
+                    payToId: new ObjectId(paidBy._id),
+                    receiveFrom: null,
+                    receiveFromId: null,
                     amount: value,
                     status: "pending",
                     trnscDate: createddate,
@@ -79,38 +102,10 @@ async function addExpense(req, res) {
                     ifOthersComment,
                   },
                 },
-              },
-            }
-          );
-
-          if (result.matchedCount > 0) {
-            let result1 = await users.updateOne(
-              { username: key },
-              {
-                $push: {
-                  expenseData: {
-                    $each: {
-                      expenseId: new ObjectId(expenseId),
-                      type: "pay",
-                      payTo: paidBy.name,
-                      payToId: new ObjectId(paidBy._id),
-                      receiveFrom: null,
-                      receiveFromId: null,
-                      amount: value,
-                      status: "pending",
-                      trnscDate: createddate,
-                      trnscCompleteDate: null,
-                      group,
-                      expenseType,
-                      ifOthersComment,
-                    },
-                  },
-                },
               }
             );
-            if (result1.matchedCount > 0) {
-              resultSuccess = true;
-            } else {
+
+            if (payerUpdateResult.matchedCount === 0) {
               resultSuccess = false;
             }
           } else {
@@ -137,11 +132,12 @@ async function addExpense(req, res) {
     console.error(error);
     return res.status(500).json({
       success: false,
-      message: "Something went wrong !",
+      message: "Something went wrong!",
       error: error,
     });
   }
 }
+
 
 async function removeExpense(req, res) {
   try {

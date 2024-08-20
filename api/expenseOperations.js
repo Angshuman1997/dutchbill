@@ -54,22 +54,22 @@ async function addExpense(req, res) {
       let resultSuccess = true;
 
       for (const [key, value] of Object.entries(amountDistribution)) {
-        if (key !== paidBy.personId) {
-          const personData = persons.find((person) => person.personId === key);
+        if (!new ObjectId(key).equals(new ObjectId(paidBy._id))) {
+          const personData = persons.find((person) => person._id === key);
           let result;
           // Receiver
           result = await users.updateOne(
-            { username: paidById.personId },
+            { _id: new ObjectId(paidById._id) },
             {
               $push: {
                 expenseData: {
                   $each: {
-                    expenseId: expenseId,
+                    expenseId: new ObjectId(expenseId),
                     type: "receive",
                     payTo: null,
                     payToId: null,
                     receiveFrom: personData.name,
-                    receiveFromId: personData.personId,
+                    receiveFromId: new ObjectId(personData._id),
                     amount: value,
                     status: "pending",
                     trnscDate: createddate,
@@ -90,10 +90,10 @@ async function addExpense(req, res) {
                 $push: {
                   expenseData: {
                     $each: {
-                      expenseId: expenseId,
+                      expenseId: new ObjectId(expenseId),
                       type: "pay",
                       payTo: paidBy.name,
-                      payToId: paidBy.personId,
+                      payToId: new ObjectId(paidBy._id),
                       receiveFrom: null,
                       receiveFromId: null,
                       amount: value,

@@ -1,6 +1,7 @@
 const express = require("express");
 const { ObjectId } = require("mongodb");
 const { connectToMongo, getDb } = require("./db");
+const { mergeAndSummarize } = require("./utils");
 
 const router = express.Router();
 
@@ -14,10 +15,10 @@ async function expenseCollection() {
   return getDb().collection("expense");
 }
 
-async function groupCollection() {
-  await connectToMongo();
-  return getDb().collection("group");
-}
+// async function groupCollection() {
+//   await connectToMongo();
+//   return getDb().collection("group");
+// }
 
 async function addExpense(req, res) {
   try {
@@ -138,7 +139,6 @@ async function addExpense(req, res) {
   }
 }
 
-
 async function removeExpense(req, res) {
   try {
     const expenseData = await expenseCollection().findOne({
@@ -222,8 +222,80 @@ async function fetchExpenses(req, res) {
   }
 }
 
+// Overview expense
+async function totalExpenseOverview(req, res) {
+  try {
+    const users = await usersCollection();
+    const user = await users.findOne({
+      _id: new ObjectId(req.body.userId),
+    });
+
+    if (!user || !user.expenseData || !user.expenseData.length) {
+      return res.status(404).json({
+        success: false,
+        message: "User or expense data not found",
+      });
+    }
+
+    const transactions = [...user.expenseData];
+
+    const summaryPay = {};
+    const summaryReceive = {};
+
+    transactions.forEach((i) => {
+      if (i.type === "pay" && i.status === "pending") {
+        if (summaryPay.hasOwnProperty(i.payToId)) {
+          summaryPay[i.payToId] = summaryPay[i.payToId] + i.amount;
+        } else {
+          summaryPay[i.payToId] = 0 + i.amount;
+        }
+      } else if (i.type === "receive" && i.status === "pending") {
+        if (summaryReceive.hasOwnProperty(i.receiveFromId)) {
+          summaryReceive[i.receiveFromId] =
+            summaryReceive[i.receiveFromId] + i.amount;
+        } else {
+          summaryReceive[i.receiveFromId] = 0 + i.amount;
+        }
+      }
+    });
+
+    const newSummaryPay = Object.fromEntries(
+      Object.entries(summaryPay).map(([key, value]) => [key, -Math.abs(value)])
+    );
+
+    const summary = await mergeAndSummarize(newSummaryPay, summaryReceive);
+
+    const objectIds = summary.map((i) => new ObjectId(i._id));
+
+    // Fetch the documents with the given ids
+    const userDoc = await users.find({ _id: { $in: objectIds } }).toArray();
+
+    // Create a map from userDoc
+    const nameMap = userDoc.reduce((map, { _id, name }) => {
+      map[_id] = name;
+      return map;
+    }, {});
+
+    // Update summary with names from userDoc
+    const updatedSummary = summary.map((item) => ({
+      ...item,
+      name: nameMap[item._id] || "Unknown", // Default to 'Unknown' if name is not found
+    }));
+
+    return res.status(200).json({ summary: updatedSummary, success: true,status: 200, message: "Total summary overview"});
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      success: false,
+      message: "Something went wrong!",
+      error: error.message,
+    });
+  }
+}
+
 router.post("/addexpense", addExpense);
 router.delete("/removeexpense", removeExpense);
 router.post("/fetchexpense", fetchExpenses);
+router.post("/totalsummary", totalExpenseOverview);
 
 module.exports = router;

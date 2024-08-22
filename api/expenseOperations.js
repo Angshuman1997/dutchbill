@@ -376,7 +376,7 @@ async function totalExpenseOverview(req, res) {
     });
 
     if (!user || !user.expenseData || !user.expenseData.length) {
-      return res.status(404).json({
+      return res.status(201).json({
         success: false,
         message: "User or expense data not found",
       });

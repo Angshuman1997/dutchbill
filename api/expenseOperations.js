@@ -453,7 +453,7 @@ async function totalExpenseOverview(req, res) {
 
 router.post("/expensecomplete", expensecomp);
 router.post("/addexpense", addExpense);
-router.delete("/removeexpense", removeexpense);
+router.post("/removeexpense", removeexpense);
 router.post("/fetchexpense", fetchExpenses);
 router.post("/totalsummary", totalExpenseOverview);
 

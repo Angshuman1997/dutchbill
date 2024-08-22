@@ -20,6 +20,7 @@ async function expenseCollection() {
 //   return getDb().collection("group");
 // }
 
+// Add Expense
 async function addExpense(req, res) {
   try {
     const {
@@ -141,65 +142,211 @@ async function addExpense(req, res) {
   }
 }
 
-async function removeExpense(req, res) {
+// Remove Expense
+async function removeexpense(req, res) {
+  const { userId, expenseId } = req.body;
+
+  if (!ObjectId.isValid(userId) || !ObjectId.isValid(expenseId)) {
+    return res.status(400).json({
+      success: false,
+      status: 400,
+      message: "Invalid userId or expenseId",
+    });
+  }
+
   try {
-    const { userId, expenseId } = req.body;
-    const expenseData = await expenseCollection().findOne({
+    const users = await usersCollection();
+    const expenses = await expenseCollection();
+
+    const expenseDataInfo = await expenses.findOne({
       _id: new ObjectId(expenseId),
     });
 
-    const amountDistributionKeys = Object.keys(expenseData.amountDistribution);
+    const amountDistributionKeys = Object.keys(
+      expenseDataInfo.amountDistribution
+    ).map((i) => new ObjectId(i));
 
-    const objectIds = amountDistributionKeys.map((i) => new ObjectId(i));
+    const objectIds = [...amountDistributionKeys, ...[new ObjectId(userId)]];
 
-    const result = await expenseCollection().deleteOne({
-      _id: new ObjectId(expenseId),
-    });
-
-    if (result) {
-      const resData = db.users.updateMany(
-        {
-          _id: { $in: objectIds },
-          createdById: new ObjectId(userId),
-          "expenseData.expenseId": new ObjectId(expenseId),
-        },
-        {
-          $pull: {
-            expenseData: {
-              expenseId: new ObjectId(expenseId),
-            },
+    const userUpdateResult = await users.updateMany(
+      { _id: { $in: objectIds } },
+      {
+        $pull: {
+          expenseData: {
+            expenseId: new ObjectId(expenseId),
+            createdById: new ObjectId(userId),
           },
-        }
-      );
-
-      if (resData) {
-        return res
-          .status(200)
-          .json({ message: "Expense Deleted", status: 200, success: true });
-      } else {
-        return res.status(404).json({
-          message: "Expense Deletion Failed",
-          status: 404,
-          success: false,
-        });
+        },
       }
-    } else {
+    );
+
+    if (userUpdateResult.modifiedCount === 0) {
       return res.status(404).json({
-        message: "Expense Deletion Failed",
-        status: 404,
         success: false,
+        status: 404,
+        message: "No matching expanseData found for the user",
       });
     }
+
+    const expenseDeleteResult = await expenses.deleteOne({
+      _id: new ObjectId(expenseId),
+    });
+
+    if (expenseDeleteResult.deletedCount === 0) {
+      return res.status(404).json({
+        success: false,
+        status: 404,
+        message: "No matching expense found in the expense collection",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      status: 200,
+      message: "Expense and associated user data deleted successfully",
+    });
   } catch (error) {
     console.error(error);
     return res.status(500).json({
       success: false,
-      message: "Something went wrong !",
-      error: error,
+      status: 500,
+      message: "An error occurred while processing your request",
     });
   }
 }
 
+// Expense Complete - Pay or Receive
+async function expensecomp(req, res) {
+  const { user, expUser, type } = req.body;
+
+  try {
+    const users = await usersCollection();
+
+    if (type === "pay") {
+      const userUpdateResult1 = await users.updateOne(
+        { _id: new ObjectId(user._id) },
+        {
+          $set: {
+            "expenseData.$[elem].status": "done",
+            "expenseData.$[elem].trnscCompleteDate": new Date(),
+          },
+        },
+        {
+          arrayFilters: [
+            {
+              "elem.payToId": new ObjectId(expUser._id),
+              "elem.createdById": new ObjectId(expUser._id),
+            },
+          ],
+        }
+      );
+
+      if (userUpdateResult1.modifiedCount === 0) {
+        return res.status(404).json({
+          success: false,
+          status: 404,
+          message: "No Expense records",
+        });
+      }
+
+      const userUpdateResult2 = await users.updateOne(
+        { _id: new ObjectId(expUser._id) },
+        {
+          $set: {
+            "expenseData.$[elem].status": "done",
+            "expenseData.$[elem].trnscCompleteDate": new Date(),
+          },
+        },
+        {
+          arrayFilters: [
+            {
+              "elem.receiveFromId": new ObjectId(user._id),
+              "elem.createdById": new ObjectId(expUser._id),
+            },
+          ],
+        }
+      );
+
+      if (userUpdateResult2.modifiedCount === 0) {
+        return res.status(404).json({
+          success: false,
+          status: 404,
+          message: "No Expense records",
+        });
+      }
+    } else {
+      const userUpdateResult1 = await users.updateOne(
+        { _id: new ObjectId(user._id) },
+        {
+          $set: {
+            "expenseData.$[elem].status": "done",
+            "expenseData.$[elem].trnscCompleteDate": new Date(),
+          },
+        },
+        {
+          arrayFilters: [
+            {
+              "elem.receiveFromId": new ObjectId(expUser._id),
+              "elem.createdById": new ObjectId(user._id),
+            },
+          ],
+        }
+      );
+
+      if (userUpdateResult1.modifiedCount === 0) {
+        return res.status(404).json({
+          success: false,
+          status: 404,
+          message: "No Expense records",
+        });
+      }
+
+      const userUpdateResult2 = await users.updateOne(
+        { _id: new ObjectId(expUser._id) },
+        {
+          $set: {
+            "expenseData.$[elem].status": "done",
+            "expenseData.$[elem].trnscCompleteDate": new Date(),
+          },
+        },
+        {
+          arrayFilters: [
+            {
+              "elem.payToId": new ObjectId(user._id),
+              "elem.createdById": new ObjectId(user._id),
+            },
+          ],
+        }
+      );
+
+      if (userUpdateResult2.modifiedCount === 0) {
+        return res.status(404).json({
+          success: false,
+          status: 404,
+          message: "No Expense records",
+        });
+      }
+    }
+
+    return res.status(200).json({
+      success: true,
+      status: 200,
+      message:
+        type === "pay"
+          ? `Amount paid to ${expUser.name}`
+          : `Amount received from ${user.name}`,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      success: false,
+      status: 500,
+      message: "An error occurred while processing your request",
+    });
+  }
+}
+
+// Fetch Expenses
 async function fetchExpenses(req, res) {
   try {
     const users = await usersCollection();
@@ -288,14 +435,12 @@ async function totalExpenseOverview(req, res) {
       name: nameMap[item._id] || "Unknown", // Default to 'Unknown' if name is not found
     }));
 
-    return res
-      .status(200)
-      .json({
-        summary: updatedSummary,
-        success: true,
-        status: 200,
-        message: "Total summary overview",
-      });
+    return res.status(200).json({
+      summary: updatedSummary,
+      success: true,
+      status: 200,
+      message: "Total summary overview",
+    });
   } catch (error) {
     console.error(error);
     return res.status(500).json({
@@ -306,8 +451,9 @@ async function totalExpenseOverview(req, res) {
   }
 }
 
+router.post("/expensecomplete", expensecomp);
 router.post("/addexpense", addExpense);
-router.delete("/removeexpense", removeExpense);
+router.delete("/removeexpense", removeexpense);
 router.post("/fetchexpense", fetchExpenses);
 router.post("/totalsummary", totalExpenseOverview);
 

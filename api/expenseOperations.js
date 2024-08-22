@@ -146,14 +146,6 @@ async function addExpense(req, res) {
 async function removeexpense(req, res) {
   const { userId, expenseId } = req.body;
 
-  if (!ObjectId.isValid(userId) || !ObjectId.isValid(expenseId)) {
-    return res.status(400).json({
-      success: false,
-      status: 400,
-      message: "Invalid userId or expenseId",
-    });
-  }
-
   try {
     const users = await usersCollection();
     const expenses = await expenseCollection();

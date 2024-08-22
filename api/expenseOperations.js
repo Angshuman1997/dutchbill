@@ -65,6 +65,7 @@ async function addExpense(req, res) {
               $push: {
                 expenseData: {
                   expenseId: new ObjectId(expenseId),
+                  createdById: new ObjectId(paidBy._id),
                   type: "receive",
                   payTo: null,
                   payToId: null,
@@ -89,6 +90,7 @@ async function addExpense(req, res) {
                 $push: {
                   expenseData: {
                     expenseId: new ObjectId(expenseId),
+                    createdById: new ObjectId(paidBy._id),
                     type: "pay",
                     payTo: paidBy.name,
                     payToId: new ObjectId(paidBy._id),
@@ -141,26 +143,30 @@ async function addExpense(req, res) {
 
 async function removeExpense(req, res) {
   try {
+    const { userId, expenseId } = req.body;
     const expenseData = await expenseCollection().findOne({
-      _id: new ObjectId(req.body.expenseId),
+      _id: new ObjectId(expenseId),
     });
 
     const amountDistributionKeys = Object.keys(expenseData.amountDistribution);
 
+    const objectIds = amountDistributionKeys.map((i) => new ObjectId(i));
+
     const result = await expenseCollection().deleteOne({
-      _id: new ObjectId(req.body.expenseId),
+      _id: new ObjectId(expenseId),
     });
 
     if (result) {
       const resData = db.users.updateMany(
         {
-          username: { $in: amountDistributionKeys },
-          "expenseData.expenseId": new ObjectId(req.body.expenseId),
+          _id: { $in: objectIds },
+          createdById: new ObjectId(userId),
+          "expenseData.expenseId": new ObjectId(expenseId),
         },
         {
           $pull: {
             expenseData: {
-              expenseId: new ObjectId(req.body.expenseId),
+              expenseId: new ObjectId(expenseId),
             },
           },
         }
@@ -282,7 +288,14 @@ async function totalExpenseOverview(req, res) {
       name: nameMap[item._id] || "Unknown", // Default to 'Unknown' if name is not found
     }));
 
-    return res.status(200).json({ summary: updatedSummary, success: true,status: 200, message: "Total summary overview"});
+    return res
+      .status(200)
+      .json({
+        summary: updatedSummary,
+        success: true,
+        status: 200,
+        message: "Total summary overview",
+      });
   } catch (error) {
     console.error(error);
     return res.status(500).json({

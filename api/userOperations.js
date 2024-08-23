@@ -1,8 +1,8 @@
-const express = require('express');
-const { ObjectId } = require('mongodb');
-const { connectToMongo, getDb } = require('./db');
-const { sendEmail } = require('../Email/EmailFunc');
-const {generateMessageBody} = require('../Email/Template');
+const express = require("express");
+const { ObjectId } = require("mongodb");
+const { connectToMongo, getDb } = require("./db");
+const { sendEmail } = require("../Email/EmailFunc");
+const { generateMessageBody } = require("../Email/Template");
 
 const router = express.Router();
 
@@ -13,7 +13,7 @@ const generateOTP = async () => {
 
 async function usersCollection() {
   await connectToMongo();
-  return getDb().collection('users');
+  return getDb().collection("users");
 }
 
 async function createUser(req, res) {
@@ -23,7 +23,16 @@ async function createUser(req, res) {
     const updateddate = createddate;
     const otp = await generateOTP();
     const expenseData = [];
-    const user = { name, username, password, emailId, createddate, updateddate, otp, expenseData };
+    const user = {
+      name,
+      username,
+      password,
+      emailId,
+      createddate,
+      updateddate,
+      otp,
+      expenseData,
+    };
 
     const mesBody = generateMessageBody(name, otp);
 
@@ -40,35 +49,62 @@ async function createUser(req, res) {
 
     if (!sendResult.success) {
       await users.deleteOne({ _id: new ObjectId(result.insertedId) });
-      return res.status(404).json({success: false, message: "Failed to create new user"});
-    } else{
-      return res.status(201).json({...result, success: true, message: "OTP sent to the given email ID"});
+      return res
+        .status(404)
+        .json({ success: false, message: "Failed to create new user" });
+    } else {
+      return res.status(201).json({
+        ...result,
+        success: true,
+        message: "OTP sent to the given email ID",
+      });
     }
-    
   } catch (error) {
     console.error(error);
-    return res.status(500).json({success: false, message: "Something went wrong !", error: error});
+    return res.status(500).json({
+      success: false,
+      message: "Something went wrong !",
+      error: error,
+    });
   }
 }
 
 async function readUsers(req, res) {
   try {
     const users = await usersCollection();
-    const { search, userId } = req.body;
+    const { search, userId, fetchType } = req.body;
 
-    let filter = {};
-    if (search) {
-      filter.name = { $regex: search, $options: 'i' };
+    let refineUserList;
+
+    if(fetchType === "search" && search) {
+      let filter = {};
+      filter.name = { $regex: search, $options: "i" };
+
+      const userList = await users
+        .find(filter, { projection: { username: 1, name: 1, _id: 1 } })
+        .toArray();
+
+      refineUserList = userList.filter(
+        (i) => !new ObjectId(i._id).equals(new ObjectId(userId))
+      );
+    } else if(fetchType === "search" && !search) {
+      refineUserList = [];
+    } else {
+      const userList = await users
+        .find({}, { projection: { username: 1, name: 1, _id: 1 } })
+        .toArray();
+
+      refineUserList = userList.filter(
+        (i) => !new ObjectId(i._id).equals(new ObjectId(userId))
+      );
     }
     
-    const userList = await users.find(filter, { projection: { username: 1, name: 1, _id: 1 } }).toArray();
-
-    const refineUserList = userList.filter((i) => !new ObjectId(i._id).equals(new ObjectId(userId)));
-
     return res.status(200).json(refineUserList);
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ error: 'An error occurred while fetching users.' });
+    return res
+      .status(500)
+      .json({ error: "An error occurred while fetching users." });
   }
 }
 
@@ -76,31 +112,59 @@ async function readSingleUser(req, res) {
   try {
     const users = await usersCollection();
     const { userId, username, userEmail, password, formType } = req.body;
-    
+
     let user;
 
-    if(formType === 'login'){
-      user = await users.findOne({ username: username, password: password }, { projection: { username: 1, name: 1, _id: 1, emailId: 1 } });
-    } else{
-      if(userId){
-        user = await users.findOne({ _id: new ObjectId(userId) }, { projection: { username: 1, name: 1, _id: 1, emailId: 1 } });
-      } else if(username){
-        user = await users.findOne({ username: username }, { projection: { username: 1, name: 1, _id: 1, emailId: 1 } });
-      } else if(userEmail) {
-        user = await users.findOne({ emailId: userEmail }, { projection: { username: 1, name: 1, _id: 1, emailId: 1 } });
+    if (formType === "login") {
+      user = await users.findOne(
+        { username: username, password: password },
+        { projection: { username: 1, name: 1, _id: 1, emailId: 1 } }
+      );
+    } else {
+      if (userId) {
+        user = await users.findOne(
+          { _id: new ObjectId(userId) },
+          { projection: { username: 1, name: 1, _id: 1, emailId: 1 } }
+        );
+      } else if (username) {
+        user = await users.findOne(
+          { username: username },
+          { projection: { username: 1, name: 1, _id: 1, emailId: 1 } }
+        );
+      } else if (userEmail) {
+        user = await users.findOne(
+          { emailId: userEmail },
+          { projection: { username: 1, name: 1, _id: 1, emailId: 1 } }
+        );
       } else {
-        return res.status(404).json({success: false, status: 404, message: "Atleast any one id, email or username is required"});
+        return res.status(404).json({
+          success: false,
+          status: 404,
+          message: "Atleast any one id, email or username is required",
+        });
       }
     }
 
     if (user) {
-      return res.status(200).json({success: true, status: 200, data: user, message: "User found"});
+      return res.status(200).json({
+        success: true,
+        status: 200,
+        data: user,
+        message: "User found",
+      });
     } else {
-      return res.status(404).json({ success: false, status: 404, message: 'User not found' });
+      return res
+        .status(404)
+        .json({ success: false, status: 404, message: "User not found" });
     }
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ success: false, status: 500, message: 'Something went wrong !', error: error });
+    return res.status(500).json({
+      success: false,
+      status: 500,
+      message: "Something went wrong !",
+      error: error,
+    });
   }
 }
 
@@ -110,7 +174,7 @@ async function updateUser(req, res) {
     const updateddate = new Date();
     const updateFields = { updateddate };
 
-    if(formType === 'forgetpass') {
+    if (formType === "forgetpass") {
       updateFields.password = password;
     } else {
       updateFields.name = name;
@@ -120,24 +184,46 @@ async function updateUser(req, res) {
 
     let result;
 
-    if(userId){
-      result = await users.updateOne({ _id: new ObjectId(req.params.id)},{ $set: updateFields });
-    } else if(username){
-      result = await users.updateOne({ username: username}, { $set: updateFields });
-    } else if(userEmail){
-      result = await users.updateOne({ emailId: userEmail}, { $set: updateFields });
+    if (userId) {
+      result = await users.updateOne(
+        { _id: new ObjectId(req.params.id) },
+        { $set: updateFields }
+      );
+    } else if (username) {
+      result = await users.updateOne(
+        { username: username },
+        { $set: updateFields }
+      );
+    } else if (userEmail) {
+      result = await users.updateOne(
+        { emailId: userEmail },
+        { $set: updateFields }
+      );
     } else {
-      return res.status(404).json({success: false, status: 404, message: "Atleast any one user id, email ID or username is required"});
+      return res.status(404).json({
+        success: false,
+        status: 404,
+        message: "Atleast any one user id, email ID or username is required",
+      });
     }
-    
+
     if (result.matchedCount > 0) {
-      return res.status(200).json({ success: true, status: 200, message: 'Information updated' });
+      return res
+        .status(200)
+        .json({ success: true, status: 200, message: "Information updated" });
     } else {
-      return res.status(404).json({ success: false, status: 404, message: 'Failed to update' });
+      return res
+        .status(404)
+        .json({ success: false, status: 404, message: "Failed to update" });
     }
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ success: false, status: 500, message: 'Something went wrong !', error: error });
+    return res.status(500).json({
+      success: false,
+      status: 500,
+      message: "Something went wrong !",
+      error: error,
+    });
   }
 }
 
@@ -146,9 +232,9 @@ async function deleteUserById(req, res) {
     const users = await usersCollection();
     const result = await users.deleteOne({ _id: new ObjectId(req.params.id) });
     if (result.deletedCount > 0) {
-      return res.status(200).json({ message: 'User deleted' });
+      return res.status(200).json({ message: "User deleted" });
     } else {
-      return res.status(404).json({ message: 'User not found' });
+      return res.status(404).json({ message: "User not found" });
     }
   } catch (error) {
     console.error(error);
@@ -160,16 +246,20 @@ async function otpAction(req, res) {
     const users = await usersCollection();
     const { id, onTime, otpValue, resend, name, emailId, formType } = req.body;
     const updateddate = new Date();
-    if(resend){
+    if (resend) {
       const otp = await generateOTP();
       const mesBody = generateMessageBody(name, otp);
-      
-      if(formType==="forgetpass"){
-        await users.updateOne({ emailId: emailId },
-        { $set: {otp: otp, updateddate: updateddate} });
-      } else{
-        await users.updateOne({ _id: new ObjectId(id) },
-        { $set: {otp: otp, updateddate: updateddate} });
+
+      if (formType === "forgetpass") {
+        await users.updateOne(
+          { emailId: emailId },
+          { $set: { otp: otp, updateddate: updateddate } }
+        );
+      } else {
+        await users.updateOne(
+          { _id: new ObjectId(id) },
+          { $set: { otp: otp, updateddate: updateddate } }
+        );
       }
 
       const sendResult = await sendEmail(
@@ -181,32 +271,47 @@ async function otpAction(req, res) {
       );
 
       if (!sendResult.success) {
-        await users.updateOne({ _id: new ObjectId(id) },
-        { $set: {otp: ''} })
-        return res.status(404).json({success: false, message: "Failed to generate otp"});
-      } else{
-        return res.status(201).json({...sendResult, success: true, message: "OTP generate success"});
+        await users.updateOne({ _id: new ObjectId(id) }, { $set: { otp: "" } });
+        return res
+          .status(404)
+          .json({ success: false, message: "Failed to generate otp" });
+      } else {
+        return res.status(201).json({
+          ...sendResult,
+          success: true,
+          message: "OTP generate success",
+        });
       }
-    } else if(onTime && !resend){
+    } else if (onTime && !resend) {
       const userDataFetch = await users.findOne({ _id: new ObjectId(id) });
-      if(userDataFetch.otp === otpValue) {
-        await users.updateOne({ _id: new ObjectId(id) },
-        { $set: {otp: '', updateddate: updateddate} });
-        return res.status(200).json({ otpVerification: true,  message: "OTP Verified !!!"});
-      } else{
-        return res.status(404).json({ otpVerification: false, message: "Please check the otp sent on the email ID"});
+      if (userDataFetch.otp === otpValue) {
+        await users.updateOne(
+          { _id: new ObjectId(id) },
+          { $set: { otp: "", updateddate: updateddate } }
+        );
+        return res
+          .status(200)
+          .json({ otpVerification: true, message: "OTP Verified !!!" });
+      } else {
+        return res.status(404).json({
+          otpVerification: false,
+          message: "Please check the otp sent on the email ID",
+        });
       }
-    } else{
-        if(formType === 'signup'){
-          await users.deleteOne({ _id: new ObjectId(id) });
-        } else{
-          await users.updateOne({ emailId: emailId },
-          { $set: {otp: ''} });
-        }
+    } else {
+      if (formType === "signup") {
+        await users.deleteOne({ _id: new ObjectId(id) });
+      } else {
+        await users.updateOne({ emailId: emailId }, { $set: { otp: "" } });
+      }
     }
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ otpVerification: false, message: "Something went wrong !", error: error});
+    return res.status(500).json({
+      otpVerification: false,
+      message: "Something went wrong !",
+      error: error,
+    });
   }
 }
 
@@ -216,38 +321,59 @@ async function checkUserExists(req, res) {
     const users = await usersCollection();
     let user;
 
-    if(formType === "signup") {
-      if(!username && !userEmail){
-        return res.status(404).json({success: false, status: 404, message: "Both username and email ID are required"});
+    if (formType === "signup") {
+      if (!username && !userEmail) {
+        return res.status(404).json({
+          success: false,
+          status: 404,
+          message: "Both username and email ID are required",
+        });
       }
       user = await users.findOne({ username: username, emailId: userEmail });
-    } else{
-      if(username){
+    } else {
+      if (username) {
         user = await users.findOne({ username: username });
-      } else if(userEmail) {
+      } else if (userEmail) {
         user = await users.findOne({ emailId: userEmail });
-      } else{
-        return res.status(404).json({success: false, status: 404, message: "Atleast any one email ID or username is required"});
+      } else {
+        return res.status(404).json({
+          success: false,
+          status: 404,
+          message: "Atleast any one email ID or username is required",
+        });
       }
     }
-    
+
     if (user) {
-      return res.status(200).json({ userExists: true, status: 200, message: "User Already exists, go forget password to change password!" });
+      return res.status(200).json({
+        userExists: true,
+        status: 200,
+        message: "User Already exists, go forget password to change password!",
+      });
     } else {
-      return res.status(201).json({ userExists: false, status: 201, message: "User does not exists" });
+      return res.status(201).json({
+        userExists: false,
+        status: 201,
+        message: "User does not exists",
+      });
     }
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ userExists: false, status: 500, message: "Something went wrong !", error: error });
+    return res.status(500).json({
+      userExists: false,
+      status: 500,
+      message: "Something went wrong !",
+      error: error,
+    });
   }
 }
 
-router.post('/create', createUser);
-router.post('/allusers', readUsers);
-router.post('/singleuser', readSingleUser);
-router.put('/update', updateUser);
-router.delete('/delete/:id', deleteUserById);
-router.post('/check', checkUserExists);
-router.post('/otp', otpAction);
+router.post("/create", createUser);
+router.post("/allusers", readUsers);
+router.post("/singleuser", readSingleUser);
+router.put("/update", updateUser);
+router.delete("/delete/:id", deleteUserById);
+router.post("/check", checkUserExists);
+router.post("/otp", otpAction);
 
 module.exports = router;

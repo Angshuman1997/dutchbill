@@ -72,22 +72,25 @@ async function createUser(req, res) {
 async function readUsers(req, res) {
   try {
     const users = await usersCollection();
-    const { search, userId, fetchType } = req.body;
+    const { search, userId, fetchType, alreadySelectedIds } = req.body;
 
     let refineUserList;
 
-    if(fetchType === "search" && search) {
+    if (fetchType === "search" && search) {
       let filter = {};
       filter.name = { $regex: search, $options: "i" };
 
-      const userList = await users
+      const tempAlreadySelectedIds =
+        alreadySelectedIds.map((i) => new ObjectId(i)) || [];
+
+      const allIds = [...[new ObjectId(userId)], ...tempAlreadySelectedIds];
+
+      filter._id = { $nin: allIds };
+
+      refineUserList = await users
         .find(filter, { projection: { username: 1, name: 1, _id: 1 } })
         .toArray();
-
-      refineUserList = userList.filter(
-        (i) => !new ObjectId(i._id).equals(new ObjectId(userId))
-      );
-    } else if(fetchType === "search" && !search) {
+    } else if (fetchType === "search" && !search) {
       refineUserList = [];
     } else {
       const userList = await users
@@ -98,7 +101,7 @@ async function readUsers(req, res) {
         (i) => !new ObjectId(i._id).equals(new ObjectId(userId))
       );
     }
-    
+
     return res.status(200).json(refineUserList);
   } catch (error) {
     console.error(error);

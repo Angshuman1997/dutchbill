@@ -110,7 +110,7 @@ async function fetchUserCreds(req, res) {
     const { userEmail } = req.body;
 
     const user = await users.findOne(
-      { userEmail: userEmail },
+      { emailId: userEmail },
       { projection: { username: 1, appUserName: 1, _id: 1, emailId: 1 } }
     );
 

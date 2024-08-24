@@ -183,7 +183,7 @@ async function updateUser(req, res) {
 async function deleteUser(req, res) {
   try {
     const users = await usersCollection();
-    const result = await users.deleteOne({ _id: new ObjectId(req.params.id) });
+    const result = await users.deleteOne({ _id: new ObjectId(req.body.userId) });
     if (result.deletedCount > 0) {
       return res
         .status(200)

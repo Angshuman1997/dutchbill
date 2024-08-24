@@ -4,7 +4,7 @@ const cors = require('cors');
 const { connectToMongo, getDb } = require('./db');
 const userRoutes = require('./userOperations');
 const expenseRoutes = require('./expenseOperations');
-
+const admin = require('./firebaseAdmin');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -17,16 +17,20 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cors()); // Enable CORS for all routes
 app.use(express.json());
 
-// Health check endpoint
-app.get('/health', (req, res) => {
+app.use(async (req, res, next) => {
+  const token = req.headers.authorization?.split('Bearer ')[1];
+
+  if (!token) {
+    return res.status(401).send('Unauthorized');
+  }
+
   try {
-    if (getDb()) {
-      res.status(200).send('Server is healthy');
-    } else {
-      res.status(500).send('Server is not connected to MongoDB');
-    }
+    const decodedToken = await admin.auth().verifyIdToken(token);
+    req.user = decodedToken; // Attach the decoded token to the request
+    next();
   } catch (error) {
-    res.status(500).send('Server is not connected to MongoDB');
+    console.error('Error verifying token:', error);
+    res.status(401).send('Unauthorized');
   }
 });
 

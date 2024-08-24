@@ -2,10 +2,10 @@
 # yarn lockfile v1
 
 
-"@fastify/busboy@^2.1.0":
-  "integrity" "sha512-vBZP4NlzfOlerQTnba4aqZoMhE/a9HY7HRqoOPaETQcSQuWEIyZMHGfVu6w9wGtGK5fED5qRs2DteVCjOH60sA=="
-  "resolved" "https://registry.npmjs.org/@fastify/busboy/-/busboy-2.1.1.tgz"
-  "version" "2.1.1"
+"@fastify/busboy@^3.0.0":
+  "integrity" "sha512-83rnH2nCvclWaPQQKvkJ2pdOjG4TZyEVuFDnlOF6KP08lDaaceVyw/W63mDuafQT+MKHCvXIPpE5uYWeM0rT4w=="
+  "resolved" "https://registry.npmjs.org/@fastify/busboy/-/busboy-3.0.0.tgz"
+  "version" "3.0.0"
 
 "@firebase/app-check-interop-types@0.3.2":
   "integrity" "sha512-LMs47Vinv2HBMZi49C09dJxp0QT5LwDzFaVGf/+ITHe3BlIhUiLNttkATSXplc89A2lAaeTqjgqVkiRfUGyQiQ=="
@@ -291,12 +291,12 @@
   "resolved" "https://registry.npmjs.org/@types/mime/-/mime-1.3.5.tgz"
   "version" "1.3.5"
 
-"@types/node@*", "@types/node@^20.10.3", "@types/node@>=13.7.0":
-  "integrity" "sha512-r7wNXakLeSsGT0H1AU863vS2wa5wBOK4bWMjZz2wj+8nBx+m5PeIn0k8AloSLpRuiwdRQZwarZqHE4FNArPuJQ=="
-  "resolved" "https://registry.npmjs.org/@types/node/-/node-20.14.12.tgz"
-  "version" "20.14.12"
+"@types/node@*", "@types/node@^22.0.1", "@types/node@>=13.7.0":
+  "integrity" "sha512-DkFrJOe+rfdHTqqMg0bSNlGlQ85hSoh2TPzZyhHsXnMtligRWpxUySiyw8FY14ITt24HVCiQPWxS3KO/QlGmWg=="
+  "resolved" "https://registry.npmjs.org/@types/node/-/node-22.5.0.tgz"
+  "version" "22.5.0"
   dependencies:
-    "undici-types" "~5.26.4"
+    "undici-types" "~6.19.2"
 
 "@types/qs@*":
   "integrity" "sha512-uXHQKES6DQKKCLh441Xv/dwxOq1TVS3JPUMlEqoEglvlhR6Mxnlew/Xq/LRVHpLyk7iK3zODe1qYHIMltO7XGg=="
@@ -866,19 +866,18 @@
     "statuses" "2.0.1"
     "unpipe" "~1.0.0"
 
-"firebase-admin@^12.2.0":
-  "integrity" "sha512-R9xxENvPA/19XJ3mv0Kxfbz9kPXd9/HrM4083LZWOO0qAQGheRzcCQamYRe+JSrV2cdKXP3ZsfFGTYMrFM0pJg=="
-  "resolved" "https://registry.npmjs.org/firebase-admin/-/firebase-admin-12.2.0.tgz"
-  "version" "12.2.0"
+"firebase-admin@^12.4.0":
+  "integrity" "sha512-3HOHqJxNmFv0JgK3voyMQgmcibhJN4LQfZfhnZGb6pcONnZxejki4nQ1twsoJlGaIvgQWBtO7rc5mh/cqlOJNA=="
+  "resolved" "https://registry.npmjs.org/firebase-admin/-/firebase-admin-12.4.0.tgz"
+  "version" "12.4.0"
   dependencies:
-    "@fastify/busboy" "^2.1.0"
+    "@fastify/busboy" "^3.0.0"
     "@firebase/database-compat" "^1.0.2"
     "@firebase/database-types" "^1.0.0"
-    "@types/node" "^20.10.3"
+    "@types/node" "^22.0.1"
     "farmhash-modern" "^1.1.0"
     "jsonwebtoken" "^9.0.0"
     "jwks-rsa" "^3.1.0"
-    "long" "^5.2.3"
     "node-forge" "^1.3.1"
     "uuid" "^10.0.0"
   optionalDependencies:
@@ -1306,7 +1305,7 @@
   "resolved" "https://registry.npmjs.org/lodash.once/-/lodash.once-4.1.1.tgz"
   "version" "4.1.1"
 
-"long@^5.0.0", "long@^5.2.3":
+"long@^5.0.0":
   "integrity" "sha512-lcHwpNoggQTObv5apGNCTdJrO69eHOZMi4BNC+rTLER8iHAqGrUVeLh/irVIM7zTw2bOXA8T6uNPeujwOLg/2Q=="
   "resolved" "https://registry.npmjs.org/long/-/long-5.2.3.tgz"
   "version" "5.2.3"
@@ -1904,10 +1903,10 @@
   dependencies:
     "random-bytes" "~1.0.0"
 
-"undici-types@~5.26.4":
-  "integrity" "sha512-JlCMO+ehdEIKqlFxk6IfVoAUVmgz7cU7zD/h9XZ0qzeosSHmUJVOzSQvvYSYWXkFXC+IfLKSIffhv0sVZup6pA=="
-  "resolved" "https://registry.npmjs.org/undici-types/-/undici-types-5.26.5.tgz"
-  "version" "5.26.5"
+"undici-types@~6.19.2":
+  "integrity" "sha512-ve2KP6f/JnbPBFyobGHuerC9g1FYGn/F8n1LWTwNxCEzd6IfqTwUQcNXgEtmmQ6DlRrC1hrSrBnCZPokRrDHjw=="
+  "resolved" "https://registry.npmjs.org/undici-types/-/undici-types-6.19.8.tgz"
+  "version" "6.19.8"
 
 "unpipe@~1.0.0", "unpipe@1.0.0":
   "integrity" "sha512-pjy2bYhSsufwWlKwPc+l3cN7+wuJlK6uz0YdJEOlQDbl6jo/YlPi4mb8agUkVC8BF7V8NuzeyPNqRksA3hztKQ=="

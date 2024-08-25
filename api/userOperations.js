@@ -71,7 +71,7 @@ async function searchUsers(req, res) {
 
     if (fetchType === "search" && search) {
       let filter = {};
-      filter.name = { $regex: search, $options: "i" };
+      filter.appUserName = { $regex: search, $options: "i" };
 
       const tempAlreadySelectedIds =
         alreadySelectedIds.map((i) => new ObjectId(i)) || [];

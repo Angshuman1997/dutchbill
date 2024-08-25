@@ -324,7 +324,7 @@ async function expensecomp(req, res) {
       message:
         type === "pay"
           ? `Amount paid to ${expUser.name}`
-          : `Amount received from ${user.name}`,
+          : `Amount received from ${expUser.name}`,
     });
   } catch (error) {
     console.error(error);

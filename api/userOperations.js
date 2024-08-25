@@ -81,13 +81,13 @@ async function searchUsers(req, res) {
       filter._id = { $nin: allIds };
 
       refineUserList = await users
-        .find(filter, { projection: { username: 1, name: 1, _id: 1 } })
+        .find(filter, { projection: { username: 1, appUserName: 1, _id: 1 } })
         .toArray();
     } else if (fetchType === "search" && !search) {
       refineUserList = [];
     } else {
       const userList = await users
-        .find({}, { projection: { username: 1, name: 1, _id: 1 } })
+        .find({}, { projection: { username: 1, appUserName: 1, _id: 1 } })
         .toArray();
 
       refineUserList = userList.filter(

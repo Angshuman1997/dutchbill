@@ -27,6 +27,7 @@ async function addExpense(req, res) {
       group,
       ifOthersComment,
       paidBy,
+      paidUserIncluded,
       amountDistribution,
     } = req.body;
     const createddate = new Date();
@@ -39,6 +40,7 @@ async function addExpense(req, res) {
       group,
       ifOthersComment,
       paidBy,
+      paidUserIncluded,
       amountDistribution,
       createddate,
     };

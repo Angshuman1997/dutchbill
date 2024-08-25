@@ -412,15 +412,15 @@ async function totalExpenseOverview(req, res) {
     const userDoc = await users.find({ _id: { $in: objectIds } }).toArray();
 
     // Create a map from userDoc
-    const nameMap = userDoc.reduce((map, { _id, name }) => {
-      map[_id] = name;
+    const nameMap = userDoc.reduce((map, { _id, appUserName }) => {
+      map[_id] = appUserName;
       return map;
     }, {});
 
     // Update summary with names from userDoc
     const updatedSummary = summary.map((item) => ({
       ...item,
-      name: nameMap[item._id] || "Unknown", // Default to 'Unknown' if name is not found
+      appUserName: nameMap[item._id] || "Unknown", // Default to 'Unknown' if name is not found
     }));
 
     return res.status(200).json({

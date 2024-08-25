@@ -115,15 +115,12 @@ async function fetchUserCreds(req, res) {
     );
 
     if (user) {
-      const tempuser = { ...user };
-      tempuser.name = tempuser.appUserName;
-      delete tempuser.appUserName;
 
       return res.status(200).json({
         success: true,
         status: 200,
-        data: tempuser,
-        message: `Welcome ${tempuser.name}`,
+        data: user,
+        message: `Welcome ${user.appUserName}`,
       });
     } else {
       return res

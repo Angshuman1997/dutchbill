@@ -15,10 +15,6 @@ async function expenseCollection() {
   return getDb().collection("expense");
 }
 
-// async function groupCollection() {
-//   await connectToMongo();
-//   return getDb().collection("group");
-// }
 
 // Add Expense
 async function addExpense(req, res) {
